@@ -21,7 +21,7 @@ class ProdukController extends Controller
     {
         $data = Produk::with('Category')->paginate(10);
         $i = 1;
-        return view('pages.Produk.index', compact('data','i'));
+        return view('pages.Produk.index', compact('data', 'i'));
     }
 
     /**
@@ -57,7 +57,6 @@ class ProdukController extends Controller
      */
     public function show(Produk $Produk)
     {
-        
     }
 
     /**
@@ -69,8 +68,8 @@ class ProdukController extends Controller
     public function edit($id)
     {
         $data = Produk::with('Category')->findOrFail($id);
-        $category= Category::all();
-        return view('pages.produk.edit',compact('data', 'category'));
+        $category = Category::all();
+        return view('pages.produk.edit', compact('data', 'category'));
     }
 
     /**
@@ -83,13 +82,26 @@ class ProdukController extends Controller
     public function update(Request $request, $id)
     {
         $data = $request->all();
-        $data['foto'] = $request->file('foto')->store('produk/foto', 'public');
-        $item = Produk::findOrFail($id);
-        $item->update($data);
-
+        try {
+            $data['foto'] = $request->file('foto')->store('produk/foto', 'public');
+            $item = Produk::findOrFail($id);
+            $item->update($data);
+        } catch (\Throwable $th) {
+            
+            $item = Produk::findOrFail($id);
+            $foto = $item->foto;
+            $item->update([
+                'nama'=> $request->nama,
+                'foto'=> $foto,
+                'harga'=> $request->harga,
+                'deskripsi'=> $request->deskripsi,
+                'tampil'=> $request->tampil,
+                'id_category'=> $request->id_category,
+            ]);
+            
+        }
         return redirect()->route('produk.index');
     }
-
     /**
      * Remove the specified resource from storage.
      *
@@ -98,7 +110,7 @@ class ProdukController extends Controller
      */
     public function destroy($id)
     {
-        $data= Produk::findOrFail($id);
+        $data = Produk::findOrFail($id);
         $data->delete();
 
         return redirect()->route('produk.index');
